@@ -8,4 +8,4 @@ ARG JAR_FILE=stripe-payment-demo-1.0-runner.jar
 COPY ${JAR_FILE} app.jar
 
 EXPOSE 3121
-ENTRYPOINT ["java", "-Xmx256m", "-XX:+UseG1GC", "-Dquarkus.http.port=3121", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-Xmx50m", "-XX:+UseG1GC", "-Dquarkus.http.port=3121", "-jar", "/app.jar"]
