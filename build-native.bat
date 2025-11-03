@@ -1,0 +1,1 @@
+mvnw clean package -Pnative -Dquarkus.native.container-build=true -Dmaven.repo.local=.\deps

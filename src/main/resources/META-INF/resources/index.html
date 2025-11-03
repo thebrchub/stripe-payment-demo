@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Checkout - Demo</title>
+    <style>
+        :root {
+            --bg: #f6f8fb;
+            --card: #ffffff;
+            --muted: #6b7280;
+            --primary: #6772e5;
+            --danger: #b00020;
+            --glass: rgba(255, 255, 255, 0.6);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 1040px;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 28px;
+        }
+
+        /* Left: Form */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 20px;
+        }
+
+        p.lead {
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #111827;
+            margin-bottom: 6px
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .note {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 12px;
+        }
+
+        /* Right: Test cards */
+        .cards-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .panel-title {
+            font-weight: 700;
+            color: #111827;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .test-card {
+            background: linear-gradient(180deg, #fff, #fbfdff);
+            border: 1px solid #e8eefc;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: #0f172a;
+        }
+
+        .card-number {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+            color: #0b1220;
+            letter-spacing: 2px;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .copy-btn {
+            padding: 6px 8px;
+            font-size: 13px;
+            border-radius: 8px;
+            border: 0;
+            background: #eef2ff;
+            color: #3730a3;
+            cursor: pointer;
+        }
+
+        .copy-btn.copied {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .danger {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        footer.small {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        @media (max-width:960px) {
+            .wrap {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <!-- Left: Checkout Form -->
+        <div class="card">
+            <h1>Pay via Stripe Checkout</h1>
+            <p class="lead">Enter an amount (minimum <strong>100</strong>). This will create a Stripe Checkout Session
+                on the server and redirect you to Stripe's hosted checkout page.</p>
+
+            <label for="amount">Amount (minimum 100)</label>
+            <input id="amount" type="number" min="100" value="100" step="1" />
+
+            <div class="row" style="margin-bottom:12px">
+                <button id="payBtn">Pay now</button>
+                <button id="presetBtn" class="secondary" type="button">Suggest amounts</button>
+            </div>
+
+            <div id="err" class="danger" style="display:none"></div>
+
+
+            <footer class="small">
+                <strong>IMPORTANT:</strong> This page uses Stripe <em>test</em> mode.
+            </footer>
+        </div>
+
+        <!-- Right: Test Cards + Instructions -->
+        <div class="card cards-panel">
+            <div>
+                <div class="panel-title">Stripe Test Cards — failure / decline cases</div>
+                <div class="card-meta" style="margin-bottom:8px;">
+                    Use these numbers in the Stripe Checkout card form to simulate various failure scenarios. Any future
+                    expiry (e.g. <code>12/34</code>), any CVC, and any postal code will work.
+                </div>
+            </div>
+
+            <div class="cards-grid" id="cardsGrid">
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Successful Payment</div>
+                        <button class="copy-btn" data-number="4242 4242 4242 4242">Copy</button>
+                    </div>
+                    <div class="card-number">4242 4242 4242 4242</div>
+                    <div class="card-meta">Successful Payment — <em>success</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Insufficient funds</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 9995">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 9995</div>
+                    <div class="card-meta">Always declined — <em>insufficient_funds</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Generic decline</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 0002">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 0002</div>
+                    <div class="card-meta">Card declined — <em>generic_decline</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Lost card</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 9987">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 9987</div>
+                    <div class="card-meta">Decline reason: <em>lost_card</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Stolen card</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 9979">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 9979</div>
+                    <div class="card-meta">Decline reason: <em>stolen_card</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Expired card</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 0069">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 0069</div>
+                    <div class="card-meta">Returns <em>expired_card</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Incorrect CVC</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 0127">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 0127</div>
+                    <div class="card-meta">Returns <em>incorrect_cvc</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Processing error</div>
+                        <button class="copy-btn" data-number="4000 0000 0000 0119">Copy</button>
+                    </div>
+                    <div class="card-number">4000 0000 0000 0119</div>
+                    <div class="card-meta">Returns <em>processing_error</em></div>
+                </div>
+
+                <div class="test-card">
+                    <div class="card-head">
+                        <div class="card-name">Invalid number</div>
+                        <button class="copy-btn" data-number="4242 4242 4242 4241">Copy</button>
+                    </div>
+                    <div class="card-number">4242 4242 4242 4241</div>
+                    <div class="card-meta">Simulates <em>incorrect_number</em></div>
+                </div>
+
+            </div>
+
+            <div class="note">Tip: Click a <strong>Copy</strong> button to copy the number/token to clipboard, then
+                paste it into the Stripe Checkout card form.</div>
+            <div style="height:6px"></div>
+            <div class="note"><span class="danger">Do not</span> use these cards in live mode. </div>
+        </div>
+    </div>
+
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        (function () {
+            // TODO: replace with your Stripe publishable key
+            const STRIPE_PUBLISHABLE_KEY = "pk_test_51RYL9g2McuOU4O1mg1fA1svGDsq8dq9L4fawSEyYmtyjAplapEszEUog4EIqKrMN1NtTzsjyVbxlgZ4GYHfmufU700hmaILrWt";
+            const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+            const amountInput = document.getElementById('amount');
+            const payBtn = document.getElementById('payBtn');
+            const errDiv = document.getElementById('err');
+            const presetBtn = document.getElementById('presetBtn');
+
+            function showError(msg) {
+                errDiv.textContent = msg;
+                errDiv.style.display = msg ? 'block' : 'none';
+            }
+
+            presetBtn.addEventListener('click', function () {
+                // quick suggestions - toggles through some values
+                const presets = [100, 200, 500, 1000];
+                const cur = Number(amountInput.value) || 100;
+                const idx = presets.indexOf(cur);
+                const next = presets[(idx + 1) % presets.length];
+                amountInput.value = next;
+            });
+
+            payBtn.addEventListener('click', async function () {
+                showError('');
+                const raw = amountInput.value;
+                if (!raw) { showError('Please enter an amount.'); return; }
+                const amount = Number(raw);
+                if (!Number.isFinite(amount) || amount < 100) {
+                    showError('Amount must be a number and at least 100.');
+                    return;
+                }
+
+                payBtn.disabled = true;
+                payBtn.textContent = 'Creating checkout...';
+
+                try {
+                    const res = await fetch('/v1/pay/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(amount) // server expects a number body
+                    });
+
+                    if (!res.ok) {
+                        const txt = await res.text().catch(() => null);
+                        throw new Error(txt || ('Server responded with ' + res.status));
+                    }
+
+                    const sessionId = (await res.text()).trim();
+                    if (!sessionId) throw new Error('Empty session id returned from server.');
+
+                    const { error } = await stripe.redirectToCheckout({ sessionId });
+
+                    if (error) {
+                        console.error('stripe.redirectToCheckout failed:', error);
+                        showError(error.message || 'Failed to redirect to Stripe Checkout.');
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    showError('Error: ' + (e.message || e));
+                } finally {
+                    payBtn.disabled = false;
+                    payBtn.textContent = 'Pay now';
+                }
+            });
+
+            // copy-to-clipboard for test cards
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', async (ev) => {
+                    const num = btn.getAttribute('data-number');
+                    try {
+                        await navigator.clipboard.writeText(num);
+                        btn.classList.add('copied');
+                        btn.textContent = 'Copied';
+                        setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1500);
+                    } catch (err) {
+                        // fallback
+                        const ta = document.createElement('textarea');
+                        ta.value = num;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try { document.execCommand('copy'); btn.classList.add('copied'); btn.textContent = 'Copied'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1500); } catch (e) { alert('Copy failed: ' + num); }
+                        document.body.removeChild(ta);
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>
